@@ -87,6 +87,9 @@ não perde o arquivo. O contador do teto horário lê o disco justamente por iss
 - Sem Higgsfield e sem OpenAI API: quando o Flow bloquear conteúdo, **não há fallback**. A falha é terminal.
 - `midia-diagnostico` classifica a sessão do Flow como `indeterminada` quando o probe do `auth status`
   não é conclusivo. A primeira geração dirá a verdade.
+- Um `gflow auth login` deixa o Chrome aberto segurando o lease do perfil. A próxima geração falha
+  até esse Chrome fechar (`pkill -f profile_<nome>`). O engine classifica isso como falha antes da
+  submissão, então repetir não custa crédito.
 
 ## Uso
 
@@ -112,7 +115,7 @@ node scripts/invocar.mjs imagem-gerar '{"prompt":"...","provider":"codex"}' /tmp
 | `FLOWKTA_ALLOW_SPEND` | `true` libera geração de vídeo. Sem isso, `video-iniciar` responde `FORBIDDEN`. |
 | `FLOWKTA_MAX_CLIPES_POR_HORA` | teto por hora (padrão 5) |
 | `FLOWKTA_WORKDIR` | onde os artefatos vivem (padrão `~/.flowkta`) |
-| `FLOWKTA_GFLOW_PROFILE` | perfil do gflow (padrão `default`) |
+| `FLOWKTA_GFLOW_PROFILE` | perfil do gflow. Ausente = usa o perfil que o próprio gflow tem como default (`gflow auth use <nome>`). Só defina para fixar outro. |
 
 ### Pré-requisitos
 
