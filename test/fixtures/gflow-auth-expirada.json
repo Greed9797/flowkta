@@ -1,0 +1,11 @@
+{
+  "status": "fail",
+  "error": {
+    "instance": "gflow:error:2e60f0cb-49c7-4843-8e15-9c4f568903d0",
+    "remediation_hint": "Run `gflow auth login --profile <name>` to refresh the session.",
+    "route": "https://labs.google/fx/api/trpc/project.createProject",
+    "class": "AuthExpiredError",
+    "exit_code": 3,
+    "retryable": false
+  }
+}

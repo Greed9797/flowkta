@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "flowkta",
+  "version": "0.1.0",
+  "title": "flowkta",
+  "description": "Geração de imagem e vídeo para web: Google Flow (Veo/Imagen) via gflow-cli e GPT Image via Codex CLI, com roteamento de domínio, lock serial do Chrome e gate de custo.",
+  "capabilityIds": [
+    "midia-diagnostico",
+    "imagem-gerar",
+    "video-iniciar",
+    "video-status",
+    "video-cancelar"
+  ],
+  "server": {
+    "name": "flowkta",
+    "entrypoint": "dist/mcp-stdio.js",
+    "forwardEnv": [
+      "FLOWKTA_WORKDIR",
+      "FLOWKTA_STATE",
+      "FLOWKTA_ALLOW_SPEND",
+      "FLOWKTA_MAX_CLIPES_POR_HORA",
+      "FLOWKTA_GFLOW_BIN",
+      "FLOWKTA_CODEX_BIN",
+      "FLOWKTA_GFLOW_PROFILE",
+      "CODEX_HOME",
+      "PATH",
+      "HOME"
+    ]
+  }
+}

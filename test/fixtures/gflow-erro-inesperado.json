@@ -1,0 +1,9 @@
+{
+  "status": "fail",
+  "error": {
+    "class": "UnexpectedError",
+    "title": "Unexpected error",
+    "exit_code": 1,
+    "retryable": false
+  }
+}
