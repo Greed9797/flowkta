@@ -38,6 +38,23 @@ describe("classificação de falha do gflow", () => {
     }
   });
 
+  it("profile ocupado não é gasto: falha antes de submeter, repetir é seguro", () => {
+    // Aconteceu de verdade: o Chrome de um `gflow auth login` ficou aberto segurando o lease.
+    const falha = classificarFalhaGflow(
+      {
+        status: "fail",
+        error: {
+          class: "UnexpectedError",
+          exit_code: 1,
+          remediation_hint: "A live process still holds this profile — commonly a prior gflow command",
+        },
+      },
+      1,
+    );
+    expect(falha.creditoProvavelmenteGasto).toBe(false);
+    expect(falha.oQueFazer).toMatch(/profile|pkill/i);
+  });
+
   it("classifica moderação como gasto consumado e desencoraja repetir igual", () => {
     const falha = classificarFalhaGflow(
       { status: "fail", error: { class: "ModerationError", exit_code: 1 } },

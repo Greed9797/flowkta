@@ -2,8 +2,12 @@
 
 ## Language
 
-Write all project content in English, including documentation, source comments,
-public errors, examples, tests, commits, and release notes.
+Write all project content in Brazilian Portuguese: identifiers, documentation, source comments,
+error messages, tests, and commits. This matches the sibling `ops-engine` in the owner's
+CreativeOS monorepo, and the operator who reads these errors at 3am reads Portuguese.
+
+The exception is anything that crosses into another tool's vocabulary — gflow flags, Invokta API
+names, model ids — which stay verbatim.
 
 ## Architecture
 

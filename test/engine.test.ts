@@ -39,7 +39,7 @@ function montar(sobrepor: Partial<Config> = {}): Deps {
     maxClipesPorHora: 5,
     gflowBin: "/bin/false",
     codexBin: "/bin/false",
-    gflowProfile: "default",
+    gflowProfile: undefined,
     codexHome: join(raiz, "codex"),
     ...sobrepor,
   };
@@ -192,6 +192,29 @@ describe("lock serial do Chrome", () => {
     const lock = new LockDoGflow(join(raiz, "state", "gflow.lock"));
     await lock.adquirir("primeiro");
     await expect(lock.adquirir("segundo")).rejects.toThrow(/já está em uso/);
+  });
+});
+
+describe("video-status", () => {
+  it("um job sem falha passa pela validação de saída (falha omitida, nunca undefined)", async () => {
+    const comGasto = montar({ permiteGastar: true });
+    gerador.travar = true;
+    const engine = criarFlowktaEngine(comGasto);
+
+    const { jobId } = (await engine.invoke(
+      "video-iniciar",
+      { modo: "clipe", prompt: "cena" },
+      { principal: null },
+    )) as { jobId: string };
+
+    // O Invokta valida a saída contra o modelo de dados JSON: um `falha: undefined` explícito
+    // derrubaria a resposta inteira de um job perfeitamente saudável.
+    const status = (await engine.invoke("video-status", { jobId }, { principal: null })) as {
+      estado: string;
+      falha?: unknown;
+    };
+    expect(status.estado).toBe("rodando");
+    expect("falha" in status).toBe(false);
   });
 });
 

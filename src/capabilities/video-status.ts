@@ -52,12 +52,15 @@ export function videoStatus(deps: Deps) {
         });
       }
 
+      // `falha` é OMITIDA quando não há falha, nunca enviada como undefined: o Invokta valida a
+      // saída contra o modelo de dados JSON, onde undefined não existe, e rejeitaria a resposta
+      // inteira de um job saudável.
       return {
         estado: job.estado,
         clipesProntos: job.artefatos.length,
         total: job.total,
         artefatos: job.artefatos,
-        falha: job.falha,
+        ...(job.falha === undefined ? {} : { falha: job.falha }),
         decorridoS: Math.round((Date.now() - job.iniciadoEm) / 1000),
       };
     },

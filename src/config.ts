@@ -26,8 +26,13 @@ const esquema = z.object({
   FLOWKTA_MAX_CLIPES_POR_HORA: z.coerce.number().int().positive().default(5),
   FLOWKTA_GFLOW_BIN: z.string().default(`${homedir()}/.local/bin/gflow`),
   FLOWKTA_CODEX_BIN: z.string().default("/opt/homebrew/bin/codex"),
-  /** Perfil do gflow. Sempre explícito: nunca depender do default implícito da CLI. */
-  FLOWKTA_GFLOW_PROFILE: z.string().default("default"),
+  /**
+   * Perfil do gflow. Quando ausente, respeitamos o perfil default que o próprio gflow tem
+   * registrado — que é uma escolha deliberada do usuário (`gflow auth use <nome>`). Forçar a
+   * string "default" aqui parecia mais explícito e estava errado: quem loga com um perfil
+   * nomeado tem a sessão viva nele, e o engine ia bater num perfil morto que ninguém usa.
+   */
+  FLOWKTA_GFLOW_PROFILE: z.string().optional(),
   CODEX_HOME: z.string().default(`${homedir()}/.codex`),
 });
 
@@ -38,7 +43,8 @@ export interface Config {
   readonly maxClipesPorHora: number;
   readonly gflowBin: string;
   readonly codexBin: string;
-  readonly gflowProfile: string;
+  /** undefined = usar o perfil default registrado no gflow. */
+  readonly gflowProfile: string | undefined;
   readonly codexHome: string;
 }
 
@@ -52,7 +58,7 @@ export function lerConfig(bruto: NodeJS.ProcessEnv = process.env): Config {
     maxClipesPorHora: env.FLOWKTA_MAX_CLIPES_POR_HORA,
     gflowBin: env.FLOWKTA_GFLOW_BIN,
     codexBin: env.FLOWKTA_CODEX_BIN,
-    gflowProfile: env.FLOWKTA_GFLOW_PROFILE,
+    gflowProfile: env.FLOWKTA_GFLOW_PROFILE ?? undefined,
     codexHome: env.CODEX_HOME,
   };
 }

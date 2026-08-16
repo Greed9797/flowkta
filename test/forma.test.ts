@@ -56,7 +56,7 @@ beforeEach(async () => {
     maxClipesPorHora: 5,
     gflowBin: "/bin/false",
     codexBin: "/bin/false",
-    gflowProfile: "default",
+    gflowProfile: undefined,
     codexHome: join(raiz, "codex"),
   };
   const nulo = new Nulo();

@@ -70,12 +70,25 @@ export function midiaDiagnostico(deps: Deps) {
       if (versao !== "") {
         const status = await executar(
           deps.config.gflowBin,
-          ["auth", "status", "--profile", deps.config.gflowProfile],
+          [
+            "auth",
+            "status",
+            ...(deps.config.gflowProfile === undefined ? [] : ["--profile", deps.config.gflowProfile]),
+          ],
           { signal: context.signal },
         ).catch(() => null);
-        const texto = `${status?.stdout ?? ""}\n${status?.stderr ?? ""}`;
-        if (/session[_ ]?(is )?(alive|valid|ok)|Flow session looks good|signed in/i.test(texto)) {
+        // O gflow colore a saída com Rich mesmo sem TTY; sem tirar o ANSI, qualquer trecho
+        // capturado sai com escapes no meio.
+        const texto = `${status?.stdout ?? ""}\n${status?.stderr ?? ""}`.replace(
+          // eslint-disable-next-line no-control-regex
+          /\[[0-9;]*m/g,
+          "",
+        );
+        // O gflow 0.58 imprime "Flow session verified as <conta>." quando o probe HTTP passa.
+        if (/session verified|session[_ ]?(is )?(alive|valid|ok)|signed in/i.test(texto)) {
           sessaoFlow = "viva";
+          const conta = texto.match(/verified as ([^\s.]+@[^\s.]+\.[a-z]+)/i)?.[1];
+          if (conta !== undefined) avisos.push(`conta do Flow em uso: ${conta}`);
         } else if (/AuthExpired|expired|401|re-login|auth login/i.test(texto)) {
           sessaoFlow = "morta";
         }

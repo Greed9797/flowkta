@@ -9,6 +9,13 @@ import type { ClasseDeFalha, Falha } from "./jobs.js";
  * duas vezes — por isso `creditoProvavelmenteGasto` é campo de primeira classe.
  */
 
+/**
+ * Falhas que acontecem ANTES de qualquer submissão ao Flow. Distinguir isso importa: cair no
+ * balde genérico faria o agente concluir que pagou por nada e desistir, quando na verdade basta
+ * liberar o profile e repetir — nenhum crédito foi tocado.
+ */
+const ANTES_DE_SUBMETER = /ProfileLocked|LeaseHeld|holds this profile|lease/i;
+
 export interface SaidaDeErroGflow {
   readonly status?: string;
   readonly error?: {
@@ -74,6 +81,16 @@ export function classificarFalhaGflow(saida: SaidaDeErroGflow | null, code: numb
       "ui-drift",
       false,
       "o gflow não alcançou a UI esperada do Flow (possível mudança de layout); tente de novo e, se persistir, atualize o gflow-cli",
+    );
+  }
+
+  // Profile ocupado por outro processo (Chrome de um `auth login`, um daemon `gflow serve`, um
+  // python zumbi). O gflow aborta antes de falar com o Flow, então repetir é seguro e grátis.
+  if (ANTES_DE_SUBMETER.test(`${classe} ${dica ?? ""} ${saida?.error?.title ?? ""}`)) {
+    return montar(
+      "ui-drift",
+      false,
+      "outro processo segura o profile do Chrome; feche-o (`pkill -f profile_default`) e tente de novo — nenhum crédito foi consumido",
     );
   }
 

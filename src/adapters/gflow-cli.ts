@@ -46,12 +46,16 @@ async function listarProduzidos(dir: string, extensoes: ReadonlySet<string>): Pr
 }
 
 function ambiente(config: Config, dirDoJob: string): NodeJS.ProcessEnv {
-  return {
-    ...process.env,
-    // Sempre explícito: nunca depender do default implícito da CLI, que já mudou entre versões.
-    GFLOW_CLI_PROFILE: config.gflowProfile,
-    GFLOW_CLI_OUTPUT_DIR: dirDoJob,
-  };
+  const env: NodeJS.ProcessEnv = { ...process.env, GFLOW_CLI_OUTPUT_DIR: dirDoJob };
+  // Só sobrepõe o perfil quando o operador escolheu um: sem isso, o gflow usa o perfil que o
+  // próprio usuário marcou como default, que é onde a sessão viva costuma estar.
+  if (config.gflowProfile !== undefined) env.GFLOW_CLI_PROFILE = config.gflowProfile;
+  return env;
+}
+
+/** `--profile <nome>` só quando há nome; caso contrário, deixa o gflow decidir. */
+function argsDePerfil(config: Config): string[] {
+  return config.gflowProfile === undefined ? [] : ["--profile", config.gflowProfile];
 }
 
 export class GflowAdapter implements GeradorDeImagem, GeradorDeVideo {
@@ -76,8 +80,7 @@ export class GflowAdapter implements GeradorDeImagem, GeradorDeVideo {
       String(pedido.quantidade),
       "--out",
       saidaDeImagens,
-      "--profile",
-      this.config.gflowProfile,
+      ...argsDePerfil(this.config),
       "--json",
     ];
     for (const ref of pedido.referencias) argv.push("--ref", ref);
@@ -107,7 +110,7 @@ export class GflowAdapter implements GeradorDeImagem, GeradorDeVideo {
     argv.push("--model", rota.modelo, "--aspect", pedido.aspecto);
     // Só omni-flash renderiza a linha de duração no Flow; mandar --duration nos Veo 3.1 é erro.
     if (rota.modelo === "omni-flash") argv.push("--duration", String(rota.duracaoSegundos));
-    argv.push("--out-dir", saidaDeVideos, "--profile", this.config.gflowProfile, "--json");
+    argv.push("--out-dir", saidaDeVideos, ...argsDePerfil(this.config), "--json");
 
     await this.rodar(argv, pedido.dirDoJob, pedido.signal, pedido.aoNascer);
     return { arquivos: await listarProduzidos(saidaDeVideos, new Set([".mp4"])) };
