@@ -39,6 +39,7 @@ function montar(sobrepor: Partial<Config> = {}): Deps {
     maxClipesPorHora: 5,
     gflowBin: "/bin/false",
     codexBin: "/bin/false",
+    codexModel: "modelo-de-teste",
     gflowProfile: undefined,
     codexHome: join(raiz, "codex"),
     ...sobrepor,

@@ -91,6 +91,17 @@ não perde o arquivo. O contador do teto horário lê o disco justamente por iss
   até esse Chrome fechar (`pkill -f profile_<nome>`). O engine classifica isso como falha antes da
   submissão, então repetir não custa crédito.
 
+## Instalar em outra máquina
+
+```bash
+git clone https://github.com/Greed9797/flowkta ~/dev/flowkta
+~/dev/flowkta/scripts/instalar.sh
+```
+
+O script builda o engine, cria o symlink `~/.claude/skills/flowkta -> <repo>/skill` (a skill do
+Claude Code vive em `skill/` neste repo) e registra o MCP nos clientes locais. Credenciais são
+por máquina: `codex login` para imagem e os pré-requisitos do gflow abaixo para vídeo.
+
 ## Uso
 
 ```bash

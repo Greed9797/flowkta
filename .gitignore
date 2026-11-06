@@ -1,3 +1,6 @@
 node_modules/
 dist/
 *.tsbuildinfo
+.tlc/
+.code-review-graph/
+resultado.json

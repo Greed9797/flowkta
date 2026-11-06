@@ -40,6 +40,25 @@ async function ehPng(caminho: string): Promise<boolean> {
   return conteudo !== null && conteudo.subarray(0, 4).equals(PNG_MAGICO);
 }
 
+/**
+ * why: falha de turno (modelo recusado, cota, auth) chega como evento no stream `--json` do
+ * stdout; o stderr só carrega log de ruído. Ler só o stderr escondeu a causa real.
+ * Eventos `item.completed` com item de erro são avisos não fatais e ficam de fora.
+ */
+export function erroDoStream(stdout: string): string | undefined {
+  for (const linha of stdout.split("\n").reverse()) {
+    if (!linha.includes('"turn.failed"') && !linha.includes('"type":"error"')) continue;
+    try {
+      const evento = JSON.parse(linha) as { type?: string; message?: string; error?: { message?: string } };
+      if (evento.type === "turn.failed" && evento.error?.message) return evento.error.message;
+      if (evento.type === "error" && evento.message) return evento.message;
+    } catch {
+      // hazard: linha cortada pelo limite de stdout não é JSON; segue para a anterior.
+    }
+  }
+  return undefined;
+}
+
 function montarPrompt(pedido: PedidoDeImagem, destino: string): string {
   const partes = [
     `Use a ferramenta nativa image_gen para gerar ${pedido.quantidade} imagem(ns) bitmap PNG.`,
@@ -74,6 +93,10 @@ export class CodexAdapter implements GeradorDeImagem {
       pedido.dirDoJob,
       "-s",
       "workspace-write",
+      "-m",
+      this.config.codexModel,
+      "-c",
+      'model_reasoning_effort="medium"',
       "--output-schema",
       esquemaPath,
       "-o",
@@ -89,8 +112,11 @@ export class CodexAdapter implements GeradorDeImagem {
       maxStdoutBytes: 64 * 1024,
     });
 
+    const erroDoTurno = erroDoStream(resultado.stdout);
     if (resultado.code !== 0) {
-      throw new Error(`codex exec falhou (exit ${resultado.code}): ${resultado.stderr.slice(-500)}`);
+      throw new Error(
+        `codex exec falhou (exit ${resultado.code}, modelo ${this.config.codexModel}): ${erroDoTurno ?? resultado.stderr.slice(-500)}`,
+      );
     }
 
     const encontrados: string[] = [];
@@ -124,7 +150,9 @@ export class CodexAdapter implements GeradorDeImagem {
       // Zero arquivo produzido é falha explícita, nunca sucesso com lista vazia. O caso comum
       // aqui é o Codex ter respondido com SVG ou com código em vez de chamar image_gen.
       throw new Error(
-        "codex não produziu nenhum PNG válido (verifique se a resposta veio como SVG/código em vez de bitmap da image_gen)",
+        erroDoTurno === undefined
+          ? "codex não produziu nenhum PNG válido (verifique se a resposta veio como SVG/código em vez de bitmap da image_gen)"
+          : `codex não produziu nenhum PNG válido: ${erroDoTurno}`,
       );
     }
 

@@ -128,6 +128,31 @@ export function midiaDiagnostico(deps: Deps) {
         );
       }
 
+      // why: com auth válida, um modelo que a conta recusa derruba toda geração com 400 — e o
+      // diagnóstico dizia "pronto". `codex debug models` lista o que a conta aceita, sem custo.
+      if (codexAuthMode !== "ausente") {
+        const listagem = await executar(deps.config.codexBin, ["debug", "models"], {
+          signal: context.signal,
+          maxStdoutBytes: 4 * 1024 * 1024,
+        }).catch(() => null);
+        let slugs: string[] = [];
+        try {
+          const corpo = JSON.parse(listagem?.stdout ?? "") as { models?: { slug?: string }[] };
+          slugs = (corpo.models ?? []).flatMap((m) => (m.slug === undefined ? [] : [m.slug]));
+        } catch {
+          slugs = [];
+        }
+        if (slugs.length === 0) {
+          avisos.push(
+            `não foi possível listar os modelos do Codex (\`codex debug models\`); o modelo ${deps.config.codexModel} não foi confirmado`,
+          );
+        } else if (!slugs.includes(deps.config.codexModel)) {
+          avisos.push(
+            `modelo ${deps.config.codexModel} não está disponível na conta do Codex; provider='codex' vai falhar. Ajuste FLOWKTA_CODEX_MODEL para um de: ${slugs.join(", ")}`,
+          );
+        }
+      }
+
       const gravavel = await mkdir(deps.config.workdir, { recursive: true })
         .then(() => true)
         .catch(() => false);

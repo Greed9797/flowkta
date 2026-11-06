@@ -27,6 +27,13 @@ const esquema = z.object({
   FLOWKTA_GFLOW_BIN: z.string().default(`${homedir()}/.local/bin/gflow`),
   FLOWKTA_CODEX_BIN: z.string().default("/opt/homebrew/bin/codex"),
   /**
+   * why: sem `-m`, o `codex exec` herda o `model` do ~/.codex/config.toml global, que muda por
+   * fora do engine. Em 2026-09 ele apontava para `gpt-6-sol` com o CLI 0.154 instalado, que ainda
+   * não conhecia a família gpt-6: a conta recusava com 400 e toda geração falhava. Aqui o modelo
+   * só orquestra a chamada da tool `image_gen` — o mais leve basta.
+   */
+  FLOWKTA_CODEX_MODEL: z.string().default("gpt-6-luna"),
+  /**
    * Perfil do gflow. Quando ausente, respeitamos o perfil default que o próprio gflow tem
    * registrado — que é uma escolha deliberada do usuário (`gflow auth use <nome>`). Forçar a
    * string "default" aqui parecia mais explícito e estava errado: quem loga com um perfil
@@ -43,6 +50,7 @@ export interface Config {
   readonly maxClipesPorHora: number;
   readonly gflowBin: string;
   readonly codexBin: string;
+  readonly codexModel: string;
   /** undefined = usar o perfil default registrado no gflow. */
   readonly gflowProfile: string | undefined;
   readonly codexHome: string;
@@ -58,6 +66,7 @@ export function lerConfig(bruto: NodeJS.ProcessEnv = process.env): Config {
     maxClipesPorHora: env.FLOWKTA_MAX_CLIPES_POR_HORA,
     gflowBin: env.FLOWKTA_GFLOW_BIN,
     codexBin: env.FLOWKTA_CODEX_BIN,
+    codexModel: env.FLOWKTA_CODEX_MODEL,
     gflowProfile: env.FLOWKTA_GFLOW_PROFILE ?? undefined,
     codexHome: env.CODEX_HOME,
   };
